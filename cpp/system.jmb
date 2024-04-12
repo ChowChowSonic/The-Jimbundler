@@ -1,0 +1,6 @@
+int system(char* cmd);
+int mkdir(char* dir, int mode);
+char pointer strcat(char pointer p1, char pointer p2);
+char pointer strcpy(char pointer p1, char pointer p2);
+int sprintf(char* res, char* fmt, char* base);
+char* calloc(long len, long sz); 

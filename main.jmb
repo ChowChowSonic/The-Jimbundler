@@ -1,0 +1,205 @@
+import cpp.system, cpp.file
+
+bool copyContents(char* origin, char* dest){
+	char* cmd = calloc(1 as long, 700 as long)
+	strcat(cmd, "cp ")
+	strcat(cmd, origin)
+	strcat(cmd, " ")
+	strcat(cmd, dest)
+	system(cmd)
+	delete cmd
+	return true; 
+}
+
+char* replaceFirst(char* str, char startchar, char replacement){
+	for int i = 0; str[i] != 0; i++{
+		if str[i] == startchar{ 
+			str[i] = replacement
+			return ->str[i+1]
+		}
+	}
+	return str
+}
+
+int pack(){
+	mkdir("./jimbundle", 777)
+	file bundlemap = file("./jimbundle.txt", "r")
+	file f = file("./jimbundle/filemap.txt", "w+")
+	int ctr = 1
+
+	for char* line = bundlemap.readLine(); bundlemap.eof() == false; line = bundlemap.readLine() {
+		char* newfilename = calloc(1 as long, 50 as long)
+		sprintf(newfilename, "./jimbundle/_%d.txt", ctr as char*)
+		copyContents(line, newfilename)
+		sprintf(newfilename, "_%d.txt", ctr)
+		f.write(newfilename)
+		f.writeChar(59 as char)
+		f.write(line)
+		f.writeChar(10 as char)
+		ctr++
+		delete newfilename
+		delete line
+	}
+	bundlemap.close()
+	f.close()
+	system("tar -czvf NEW_bundle.jimbundle -C ./jimbundle .")
+	return 0
+}
+??
+A hash function I found on stackoverflow
+It aint much, but it's good enough for me 
+??
+int hash(char* str){
+	long hash = 5381 as long
+	for (long i = 0 as long; str[i] != 0; ++i)
+        hash = 33 * hash + str[i];
+	return hash as int; 
+}
+
+int main(int argc, string* args){
+	if argc == 1 return 0
+	char* cmd = calloc(1 as long, 700 as long)
+	switch auto break hash(args[1]){
+		default {
+			println "hash of arg 1:", hash(args[1])
+			return 0
+		}
+		case 193486030{//pre-computed hash value of "add"
+			file f = file("./jimbundle.txt", "a+")
+			for int i = 2; i < argc; i++{
+				f.write(args[i])
+				f.writeChar(10 as char)
+			}
+			f.close()
+		}
+		case 2090607556{//pre-computed hash value of "pack"
+			system("rm -rf ./jimbundle/*")
+			pack(); 
+			if argc > 2{
+				strcat(cmd, "mv ./NEW_bundle.jimbundle ./")
+				strcat(cmd, "NEW_")
+				strcat(cmd, args[2])
+				strcat(cmd, ".jimbundle")
+				system(cmd)
+			}
+		}
+		case 550515207{//pre-computed hash value of "unpack"
+		//system("rm -rf ./jimbundle/*")
+		pack(); 
+		system("mv ./NEW_bundle.jimbundle ./backup.jimbundle")
+		sprintf(cmd, "tar -xvzf %s -C ./jimbundle", args[2])
+		system(cmd)
+		file f = file("./jimbundle/filemap.txt", "r")
+		for char* line = f.readLine(); f.eof() == false; line = f.readLine() {
+			char* endfile = replaceFirst(line, 59 as char, 0 as char)
+			strcpy(cmd, "mkdir -p `dirname ")
+			strcat(cmd, endfile)
+			strcat(cmd, "` && cp ")
+			strcat(cmd, line)
+			strcat(cmd, " ")
+			strcat(cmd, endfile)
+			system(cmd)
+			delete line
+		}
+		delete cmd
+		}
+		case 2090720079 {//pre computed hash of "send" 
+			if argc < 4 {
+				println "usage: jimbundler send <FILE> <USER>@<DEVICE>:<REMOTE_LOCATION>"
+				break; 
+			}
+			strcat(cmd, "scp ")
+			strcat(cmd, args[2])
+			strcat(cmd, " ")
+			strcat(cmd, args[3])
+			system(cmd)
+		}
+		case 1132745181 {//pre computed hash of "download" 
+			if argc < 4 {
+				println "usage: jimbundler download <FILE> <USER>@<DEVICE>:<REMOTE_LOCATION>"
+				break; 
+			}
+			strcat(cmd, "scp -r ")
+			strcat(cmd, args[4])
+			strcat(cmd, "/")
+			strcat(cmd, args[2])
+			strcat(cmd, ".jimbundle")
+			system(cmd)
+		}
+		case 193489342{//pre-computed hash of "dep" shor for deploy
+			if argc < 4 {
+				println "usage: jimbundler deploy <LOCAL_FILE> <REMOTE_FILE_DIR> <USER>@<IP_ADDR>"
+				break; 
+			}
+			char* scp = calloc(1 as long, 1000 as long)
+			strcat(scp, "scp ")
+			strcat(scp, args[2])
+			strcat(scp, " ")
+			strcat(scp, args[4])
+			strcat(scp, ":")
+			strcat(scp, args[3])
+			println scp
+			system(scp)
+
+			strcat(cmd, "ssh ")
+			strcat(cmd, args[4])
+			strcat(cmd, " 'cd ")
+			strcat(cmd, args[3])
+			strcat(cmd, " ; ./jimbundler unpack ./")
+			strcat(cmd, args[2])
+			strcat(cmd, "'")
+			system(cmd)
+		}
+		case 2090500240 {//"mark"
+			if argc < 3 {
+				println "usage: jimbundler mark <FILE>"; 
+				break; 
+			}
+			char* filename = calloc(1 as long, 1000 as long)
+			strcat(filename, args[2])
+			filename[0] = (66 as char);
+			filename[1] = (65 as char);
+			filename[2] = (68 as char);
+			strcat(cmd, "mv ");
+			strcat(cmd, args[2]);
+			strcat(cmd, " ");
+			strcat(cmd, filename);
+			system( cmd );
+			delete filename; 
+		}
+		case 357257007{// "rollback"
+			if argc < 4 {
+				println "usage: Jimbundler rollback <USER>@<IP_ADDR> <REMOTE_LOCATION>"
+			}
+			strcat(cmd, "ssh ")
+			strcat(cmd, args[2])
+			strcat(cmd, " 'cd ")
+			strcat(cmd, args[3])
+			strcat(cmd, " ; ./jimbundler rb'")
+			println cmd
+			system(cmd)
+		}
+		case 5863769{
+			char* cmd2 = calloc(1 as long, 1000 as long)
+			strcat(cmd2, "tar -xvzf ./backup.jimbundle -C ./jimbundle")
+			system(cmd2)
+			delete cmd2
+			file f = file("./jimbundle/filemap.txt", "r")
+			for char* line = f.readLine(); f.eof() == false; line = f.readLine() {
+				char* endfile = replaceFirst(line, 59 as char, 0 as char)
+				strcpy(cmd, "mkdir -p `dirname ")
+				strcat(cmd, endfile)
+				strcat(cmd, "` && cp ")
+				strcat(cmd, line)
+				strcat(cmd, " ")
+				strcat(cmd, endfile)
+				println cmd
+				system(cmd)
+				delete line
+			}
+			delete cmd
+		}
+	}
+	println "executed successfully"
+	return 0
+}

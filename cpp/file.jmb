@@ -1,0 +1,78 @@
+object _IO_FILE{}
+object _IO_marker{}
+object _IO_codecvt{}
+object _IO_wide_data{}
+object _IO_lock_t{}
+object _IO_FILE
+{
+  int _flags;
+  char *_IO_read_ptr;	
+  char *_IO_read_end;	
+  char *_IO_read_base;	
+  char *_IO_write_base;	
+  char *_IO_write_ptr;	
+  char *_IO_write_end;	
+  char *_IO_buf_base;	
+  char *_IO_buf_end;	
+  char *_IO_save_base; 
+  char *_IO_backup_base;  
+  char *_IO_save_end; 
+  _IO_marker *_markers;
+  _IO_FILE *_chain;
+  int _fileno;
+  int _flags2;
+  long _old_offset;
+  short _cur_column;
+  char _vtable_offset;
+  char _shortbuf;
+  _IO_lock_t *_lock;
+
+  bool feof(); 
+  int fclose(); 
+  int fgetc(); 
+}
+int fputc(char c, _IO_FILE pointer f); 
+_IO_FILE* fopen(string file, string mode);
+char* realloc(char* s, int sz); 
+object file{
+	_IO_FILE pointer internal;
+	bool readonly
+	constructor(string filedir, string mode){
+		this.readonly = (mode[0] == 99)
+		this.internal = fopen(filedir, mode)
+		if this.internal == (0 as _IO_FILE*) println "Warning: File",filedir,"does not exist"
+	}
+	bool eof(){
+		return this.internal->feof(); 
+	}
+	char readChar(){
+		return this.internal->fgetc() as char; 
+	}
+	char* readLine(){
+		char* line = heap char(0 as char)
+		int size = 1
+		for char c = this.readChar(); this.eof() == false; c = this.readChar() {
+			if(c == 10) break; 
+			line = realloc(line, size+1)
+			line[size-1] = c
+			line[size] = 0 as char
+			size++
+		}
+		return line
+	}
+	bool close(){
+		if( this.internal == 0 as char*) return true; 
+		return this.internal->fclose() != 0; 
+	}
+	bool writeChar(char c){
+		if this.readonly return false; 
+		return fputc(c, this.internal) == c
+	}
+	bool write(char pointer c){
+		bool retval = true; 
+		for int i = 0; c[i] != 0; i++{
+			retval = retval and this.writeChar(c[i])
+		}
+		return retval; 
+	}
+}
